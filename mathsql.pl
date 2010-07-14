@@ -13,7 +13,7 @@ my $giturl = "http://github.com/nullren/sqlbot";
 ####### #######
 
 my $SERVER = 'irc.foonetic.net';
-my $CHANNEL = '#mathematics';
+my @CHANNELS = qw(#mathematics #spam);
 
 my $NICK = 'mathsql';
 my $USERNAME = 'banana';
@@ -50,7 +50,9 @@ POE::Session->create( inline_states => {
         $_[KERNEL]->post( $IRC_ALIAS => connect => {} );
     },
     irc_001 => sub {
-        $_[KERNEL]->post( $IRC_ALIAS => join => $CHANNEL );
+        foreach my $chan (@CHANNELS){
+            $_[KERNEL]->post( $IRC_ALIAS => join => $chan );
+        }
     },
     irc_433 => sub {
         $_[KERNEL]->post( $IRC_ALIAS => nick => $NICK . $$%1000 );
