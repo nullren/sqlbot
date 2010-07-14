@@ -77,21 +77,25 @@ POE::Session->create( inline_states => {
                     $sth->execute; 
                     my (@matrix) = ();
                     my $c = 0;
-                    while (my @ary = $sth->fetchrow_array())
-                    {
+                    my $COLS = 0;
+                    while (my @ary = $sth->fetchrow_array()){
+                        last if $c++ > 10;
                         push(@matrix, [@ary]);  # [@ary] is a reference
-                            $c++;
+                        $COLS = scalar @ary;
                     }
                     $sth->finish();
 
-                    if( $c > 10 ){
-                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows returned...");
-                        $c = 10;
-                    }
-                    foreach my $row (@matrix){
-                        last unless $c--;
-                        $" = ', ';
-                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @$row > 1 ? "(@$row)" : "@$row"));
+                    $" = '\', \'';
+                    if( $COLS == 1 ){
+                        my @shit = ();
+                        foreach my $row (@matrix){
+                            push @shit, $$row[0]; 
+                        }
+                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "('@shit')");
+                    } else {
+                        foreach my $row (@matrix){
+                            $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @$row > 1 ? "('@$row')" : "@$row"));
+                        }
                     }
                 } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
             } elsif( $query =~ /^help/i ){
