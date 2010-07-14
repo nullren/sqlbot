@@ -71,32 +71,34 @@ POE::Session->create( inline_states => {
         if( $msg =~ /^!(.+)$/ ){
             my $query = $1;
             if( $query =~ /^(select|call|show)/i ){
-                my $sth = $dbh->prepare("$query");
-                eval { $sth->execute; };
-                my (@matrix) = ();
-                my $c = 0;
-                while (my @ary = $sth->fetchrow_array())
-                {
-                    push(@matrix, [@ary]);  # [@ary] is a reference
-                    $c++;
-                }
-                $sth->finish();
+                eval { 
+                    my $sth = $dbh->prepare("$query");
+                    $sth->execute; 
+                    my (@matrix) = ();
+                    my $c = 0;
+                    while (my @ary = $sth->fetchrow_array())
+                    {
+                        push(@matrix, [@ary]);  # [@ary] is a reference
+                            $c++;
+                    }
+                    $sth->finish();
 
-                if( $c > 10 ){
-                    $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows returned...");
-                    $c = 10;
-                }
-                foreach my $row (@matrix){
+                    if( $c > 10 ){
+                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows returned...");
+                        $c = 10;
+                    }
+                    foreach my $row (@matrix){
 
-                    $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "@$row");
-                }
+                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "@$row");
+                    }
+                } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
             } elsif( $query =~ /^help/i ){
                 $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "come check me out at $giturl");
             #} elsif( $query =~ /^(insert|update)/i ){
             } else {
                 my $c = 0;
-                eval { $c = $dbh->do("$1"); }; 
-                $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected $@");
+                eval { $c = $dbh->do("$1"); } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
+                $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected");
             }
         }
     },
