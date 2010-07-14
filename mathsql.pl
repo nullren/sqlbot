@@ -71,7 +71,7 @@ POE::Session->create( inline_states => {
 
         if( $msg =~ /^!(.+)$/ ){
             my $query = $1;
-            if( $query =~ /^(select|call|show)/i ){
+            if( $query =~ /^(select|call|show|desc)/i ){
                 eval { 
                     my $sth = $dbh->prepare("$query");
                     $sth->execute; 
