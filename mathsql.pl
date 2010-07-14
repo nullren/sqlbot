@@ -24,6 +24,7 @@ my $dsn     = "DBI:mysql:database=botshitz";
 
 my $perl_location = `which perl`; chomp $perl_location;
 my $script_location = "$0";
+sleep 2;
 
 ####### #######
 
@@ -87,12 +88,18 @@ POE::Session->create( inline_states => {
                     }
                     foreach my $row (@matrix){
                         last unless $c--;
-                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "@$row");
+                        $" = ', ';
+                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @$row > 1 ? "(@$row)" : "@$row"));
                     }
                 } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
             } elsif( $query =~ /^help/i ){
                 $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "come check me out at $giturl");
             #} elsif( $query =~ /^(insert|update)/i ){
+            } elsif( $query =~ /^quit/i ){
+                exit 0;
+            } elsif( $query =~ /^respawn/i ){
+                exec $perl_location, $script_location;
+                exit 0;
             } else {
                 my $c = 0;
                 eval { $c = $dbh->do("$1"); } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
