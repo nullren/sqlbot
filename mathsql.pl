@@ -21,8 +21,6 @@ my $IRCNAME = 'ask me for help';
 
 my $log_dsn = "DBI:mysql:database=woodstove";
 my $dsn     = "DBI:mysql:database=botshitz";
-my $db_user = "derpoid";
-my $db_pass = "lolzwut";
 
 my $perl_location = `which perl`; chomp $perl_location;
 my $script_location = "$0";
@@ -33,8 +31,8 @@ my $IRC_ALIAS = 'butt';
 
 #sleep 3; #time to respawn
 
-my $log_dbh = DBI->connect($log_dsn,$db_user,$db_pass, {'RaiseError' => 1}) or die "failed: $@\n";
-my $dbh     = DBI->connect(    $dsn,$db_user,$db_pass, {'RaiseError' => 1}) or die "failed: $@\n";
+my $log_dbh = DBI->connect($log_dsn,'logger','donger', {'RaiseError' => 1}) or die "failed: $@\n";
+my $dbh     = DBI->connect(    $dsn,'derpoid','lolzwut', {'RaiseError' => 1}) or die "failed: $@\n";
 
 my $log_chat = $log_dbh->prepare('INSERT INTO logs (target, nick, text) VALUES (?, ?, ?)') or die "could not make prepare statement: " . $log_dbh->errstr;
 
@@ -88,7 +86,7 @@ POE::Session->create( inline_states => {
                         $c = 10;
                     }
                     foreach my $row (@matrix){
-
+                        last unless $c--;
                         $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "@$row");
                     }
                 } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
