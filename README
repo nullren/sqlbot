@@ -1,0 +1,1 @@
+this bot just interfaces with mysql. most of the sql security stuff should be taken care of through safe mysql practices. emphasis is going to put on presenting sql query output. at least that is the goal.
