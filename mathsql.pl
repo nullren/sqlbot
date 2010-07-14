@@ -7,13 +7,13 @@ use Switch;
 use POE qw(Component::IRC);
 use DBI;
 
-my $giturl = "http://github.com/";
+my $giturl = "http://github.com/nullren/sqlbot";
 
 ####### #######
 ####### #######
 
 my $SERVER = 'irc.foonetic.net';
-my $CHANNEL = '#spam';
+my $CHANNEL = '#mathematics';
 
 my $NICK = 'mathsql';
 my $USERNAME = 'banana';
@@ -82,18 +82,21 @@ POE::Session->create( inline_states => {
                 }
                 $sth->finish();
 
-                $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows returned...");
-                $c = 10 if $c > 10;
+                if( $c > 10 ){
+                    $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows returned...");
+                    $c = 10;
+                }
                 foreach my $row (@matrix){
 
                     $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "@$row");
                 }
-            } elsif( $query =~ /^(insert|update)/i ){
+            } elsif( $query =~ /^help/i ){
+                $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "come check me out at $giturl");
+            #} elsif( $query =~ /^(insert|update)/i ){
+            } else {
                 my $c = 0;
                 eval { $c = $dbh->do("$1"); }; 
                 $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected $@");
-            } elsif( $query =~ /^help/i ){
-                $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "come check me out at $giturl");
             }
         }
     },
