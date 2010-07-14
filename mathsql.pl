@@ -91,7 +91,7 @@ POE::Session->create( inline_states => {
                         foreach my $row (@matrix){
                             push @shit, $$row[0]; 
                         }
-                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "('@shit')");
+                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @shit > 1 ? "('@shit')" : "@shit"));
                     } else {
                         foreach my $row (@matrix){
                             $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @$row > 1 ? "('@$row')" : "@$row"));
