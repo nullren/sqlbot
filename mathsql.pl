@@ -85,6 +85,8 @@ POE::Session->create( inline_states => {
                     }
                     $sth->finish();
 
+                    $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "empty set") if $c == 0;
+
                     $" = '\', \'';
                     if( $COLS == 1 ){
                         my @shit = ();
