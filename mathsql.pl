@@ -32,8 +32,8 @@ my $IRC_ALIAS = 'butt';
 
 #sleep 3; #time to respawn
 
-my $log_dbh = DBI->connect($log_dsn,'logger','donger', {'RaiseError' => 1}) or die "failed: $@\n";
-my $dbh     = DBI->connect(    $dsn,'derpoid','lolzwut', {'RaiseError' => 1}) or die "failed: $@\n";
+my $log_dbh = DBI->connect_cached($log_dsn,'logger','donger', {'RaiseError' => 1}) or die "failed: $@\n";
+my $dbh     = DBI->connect_cached(    $dsn,'derpoid','lolzwut', {'RaiseError' => 1}) or die "failed: $@\n";
 
 my $log_chat = $log_dbh->prepare('INSERT INTO logs (target, nick, text) VALUES (?, ?, ?)') or die "could not make prepare statement: " . $log_dbh->errstr;
 
@@ -60,61 +60,8 @@ POE::Session->create( inline_states => {
     irc_kick => sub {
         exit 0;
     },
-    irc_public => sub {
-        my ($kernel, $heap, $who, $where, $msg) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2];
-        my $nick    = (split /!/, $who)[0];
-        my $channel = $where->[0];
-        my $ts      = scalar localtime;
-        print " [$ts] <$nick:$channel> $msg\n";
-        # write to db
-        $log_chat->execute($channel, $nick, $msg) or die "could not execute statement: " . $log_chat->errstr;
-
-        if( $msg =~ /^!(.+)$/ ){
-            my $query = $1;
-            if( $query =~ /^(select|call|show|desc)/i ){
-                eval { 
-                    my $sth = $dbh->prepare("$query");
-                    $sth->execute; 
-                    my (@matrix) = ();
-                    my $c = 0;
-                    my $COLS = 0;
-                    while (my @ary = $sth->fetchrow_array()){
-                        last if $c++ > 10;
-                        push(@matrix, [@ary]);  # [@ary] is a reference
-                        $COLS = scalar @ary;
-                    }
-                    $sth->finish();
-
-                    $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "empty set") if $c == 0;
-
-                    $" = '\', \'';
-                    if( $COLS == 1 ){
-                        my @shit = ();
-                        foreach my $row (@matrix){
-                            push @shit, $$row[0]; 
-                        }
-                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @shit > 1 ? "('@shit')" : "@shit"));
-                    } else {
-                        foreach my $row (@matrix){
-                            $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @$row > 1 ? "('@$row')" : "@$row"));
-                        }
-                    }
-                } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
-            } elsif( $query =~ /^help/i ){
-                $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "come check me out at $giturl");
-            #} elsif( $query =~ /^(insert|update)/i ){
-            } elsif( $query =~ /^quit/i ){
-                exit 0;
-            } elsif( $query =~ /^respawn/i ){
-                exec $perl_location, $script_location;
-                exit 0;
-            } else {
-                my $c = 0;
-                eval { $c = $dbh->do("$1"); } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
-                $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected");
-            }
-        }
-    },
+    irc_public => \&handle_msg,
+    irc_msg => \&handle_msg,
     _child => sub {},
     _default => sub {
         #printf "%s: session %s caught an unhandled %s event.\n",
@@ -127,3 +74,65 @@ POE::Session->create( inline_states => {
 },);
 
 POE::Kernel->run;
+
+sub handle_msg {
+    my ($kernel, $heap, $who, $where, $msg) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2];
+    my $nick    = (split /!/, $who)[0];
+    my $channel = $where->[0];
+    my $ts      = scalar localtime;
+    print " [$ts] <$nick:$channel> $msg\n";
+
+    $channel = $nick if $channel eq $NICK;
+
+    # write to db
+    $log_dbh = DBI->connect_cached($log_dsn,'logger','donger', {'RaiseError' => 1}) or die "failed: $@\n";
+    $dbh     = DBI->connect_cached(    $dsn,'derpoid','lolzwut', {'RaiseError' => 1}) or die "failed: $@\n";
+
+    $log_chat->execute($channel, $nick, $msg) or die "could not execute statement: " . $log_chat->errstr;
+
+    if( $msg =~ /^!(.+)$/ ){
+        my $query = $1;
+        if( $query =~ /^(select|call|show|desc)/i ){
+            eval { 
+                my $sth = $dbh->prepare("$query");
+                $sth->execute; 
+                my (@matrix) = ();
+                my $c = 0;
+                my $COLS = 0;
+                while (my @ary = $sth->fetchrow_array()){
+                    last if $c++ > 10;
+                    push(@matrix, [@ary]);  # [@ary] is a reference
+                    $COLS = scalar @ary;
+                }
+                $sth->finish();
+
+                $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "empty set") if $c == 0;
+
+                $" = '\', \'';
+                if( $COLS == 1 ){
+                    my @shit = ();
+                    foreach my $row (@matrix){
+                        push @shit, $$row[0]; 
+                    }
+                    $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @shit > 1 ? "('@shit')" : "@shit"));
+                } else {
+                    foreach my $row (@matrix){
+                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @$row > 1 ? "('@$row')" : "@$row"));
+                    }
+                }
+            } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
+        } elsif( $query =~ /^help/i ){
+            $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "come check me out at $giturl");
+        #} elsif( $query =~ /^(insert|update)/i ){
+        } elsif( $query =~ /^quit/i ){
+            exit 0;
+        } elsif( $query =~ /^respawn/i ){
+            exec $perl_location, $script_location;
+            exit 0;
+        } else {
+            my $c = 0;
+            eval { $c = $dbh->do("$1"); } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
+            $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected");
+        }
+    }
+}
