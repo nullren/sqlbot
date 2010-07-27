@@ -99,7 +99,7 @@ sub handle_msg {
                 my $COLS = 0;
                 while (my @ary = $sth->fetchrow_array()){
                     $COLS = scalar @ary;
-                    last if $c++ > ($COLS==1?100:10);
+                    last if $c++ > ($COLS==1?50:10);
                     push(@matrix, [@ary]);  # [@ary] is a reference
                 }
                 $sth->finish();
