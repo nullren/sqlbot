@@ -50,9 +50,7 @@ POE::Session->create( inline_states => {
         $_[KERNEL]->post( $IRC_ALIAS => connect => {} );
     },
     irc_001 => sub {
-        foreach my $chan (@CHANNELS){
-            $_[KERNEL]->post( $IRC_ALIAS => join => $chan );
-        }
+        $_[KERNEL]->post( $IRC_ALIAS => join => $_ ) for @CHANNELS;
     },
     irc_433 => sub {
         $_[KERNEL]->post( $IRC_ALIAS => nick => $NICK . $$%1000 );
@@ -100,9 +98,9 @@ sub handle_msg {
                 my $c = 0;
                 my $COLS = 0;
                 while (my @ary = $sth->fetchrow_array()){
-                    last if $c++ > 10;
-                    push(@matrix, [@ary]);  # [@ary] is a reference
                     $COLS = scalar @ary;
+                    last if $c++ > ($COLS==1?100:10);
+                    push(@matrix, [@ary]);  # [@ary] is a reference
                 }
                 $sth->finish();
 
@@ -111,9 +109,7 @@ sub handle_msg {
                 $" = '\', \'';
                 if( $COLS == 1 ){
                     my @shit = ();
-                    foreach my $row (@matrix){
-                        push @shit, $$row[0]; 
-                    }
+                    push @shit, $$_[0] for @matrix;
                     $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @shit > 1 ? "('@shit')" : "@shit"));
                 } else {
                     foreach my $row (@matrix){
