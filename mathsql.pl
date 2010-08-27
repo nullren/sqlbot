@@ -56,7 +56,10 @@ POE::Session->create( inline_states => {
         $_[KERNEL]->post( $IRC_ALIAS => nick => $NICK . $$%1000 );
     },
     irc_kick => sub {
-        exit 0;
+        my ($kernel, $heap, $kicker, $where, $kickee, $msg) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2, ARG3];
+        my $ts      = scalar localtime;
+        print " [$ts] $kicker kicked $kickee from $where: $msg\n";
+        exit 0 if $kickee =~ /mathsql/i;
     },
     irc_public => \&handle_msg,
     irc_msg => \&handle_msg,
