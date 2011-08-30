@@ -131,7 +131,7 @@ sub handle_msg {
         } elsif( $query =~ /^quit/i ){
             exit 0;
         } elsif( $query =~ /^respawn/i ){
-            exec "cd $git_dir && git pull";
+            system "cd $git_dir && git pull";
             exec $perl_location, $script_location;
             exit 0;
         } else {
