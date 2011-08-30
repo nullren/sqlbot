@@ -2,7 +2,6 @@
 
 use strict;
 use warnings;
-use Switch;
 
 use POE qw(Component::IRC);
 use DBI;
@@ -22,6 +21,9 @@ my $NICK = 'mathsql';
 my $USERNAME = 'banana';
 my $IRCNAME = 'ask me for help';
 
+####### #######
+####### #######
+
 my $log_dsn = "DBI:mysql:database=woodstove";
 my $dsn     = "DBI:mysql:database=botshitz";
 
@@ -32,8 +34,6 @@ sleep 2;
 ####### #######
 
 my $IRC_ALIAS = 'butt';
-
-#sleep 3; #time to respawn
 
 my $log_dbh = DBI->connect_cached($log_dsn,'logger','donger', {'RaiseError' => 1}) or die "failed: $@\n";
 my $dbh     = DBI->connect_cached(    $dsn,'derpoid','lolzwut', {'RaiseError' => 1}) or die "failed: $@\n";
@@ -70,11 +70,6 @@ POE::Session->create( inline_states => {
     irc_msg => \&handle_msg,
     _child => sub {},
     _default => sub {
-        #printf "%s: session %s caught an unhandled %s event.\n",
-        #    scalar localtime(), $_[SESSION]->ID, $_[ARG0];
-#        print "$_[ARG0]: ",
-#            join(" ", map({"ARRAY" eq ref $_ ? "" : "$_"} @{$_[ARG1]})),
-#            "\n";
         0;    # false for signals
     },
 },);
@@ -127,9 +122,6 @@ sub handle_msg {
             } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
         } elsif( $query =~ /^help/i ){
             $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "come check me out at $giturl");
-        #} elsif( $query =~ /^(insert|update)/i ){
-        } elsif( $query =~ /^quit/i ){
-            exit 0;
         } elsif( $query =~ /^respawn/i ){
             system "cd $git_dir && git pull";
             exec $perl_location, $script_location;
