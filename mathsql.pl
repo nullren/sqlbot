@@ -16,7 +16,7 @@ my $git_dir = "/home/ren/src/sqlbot";
 my $SERVER = 'irc.foonetic.net';
 my $PORT = 6697;
 my $USESSL = 1;
-my @CHANNELS = qw(#spam);
+my @CHANNELS = qw(#mathematics);
 
 my $NICK = 'mathsql';
 my $USERNAME = 'banana';
