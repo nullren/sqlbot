@@ -8,7 +8,7 @@ use POE qw(Component::IRC);
 use DBI;
 
 my $giturl = "http://github.com/nullren/sqlbot";
-my $git_dir = "/home/ren/src/sqlbot/.git";
+my $git_dir = "/home/ren/src/sqlbot";
 
 ####### #######
 ####### #######
@@ -131,7 +131,7 @@ sub handle_msg {
         } elsif( $query =~ /^quit/i ){
             exit 0;
         } elsif( $query =~ /^respawn/i ){
-            exec "GIT_DIR=$git_dir git pull";
+            exec "cd $git_dir && git pull";
             exec $perl_location, $script_location;
             exit 0;
         } else {
