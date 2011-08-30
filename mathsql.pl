@@ -13,6 +13,8 @@ my $giturl = "http://github.com/nullren/sqlbot";
 ####### #######
 
 my $SERVER = 'irc.foonetic.net';
+my $PORT = 6697;
+my $USESSL = 1;
 my @CHANNELS = qw(#mathematics #spam);
 
 my $NICK = 'mathsql';
@@ -42,6 +44,8 @@ my $irc = POE::Component::IRC->spawn(
     ircname => $IRCNAME,
     username => $USERNAME,
     server => $SERVER,
+    port => $PORT,
+    usessl => $USESSL;
     alias => $IRC_ALIAS, ) or die "uhhhhhh $!";
     
 POE::Session->create( inline_states => {
