@@ -126,14 +126,18 @@ sub handle_msg {
             exit 0;
         } else {
             my $c = 0;
-            eval { $c = $dbh->do("$query"); } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
-            $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected");
+            eval { 
+              $c = $dbh->do("$query"); 
+              $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected");
+            } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
         }
     } elsif( $msg =~ /^$NICK[:,] (\d+) pushups$/ ){
         my $pushups = $1;
         my $c = 0;
-        eval { $c = $dbh->do("INSERT INTO pushup_battle (dude, pushups) VALUES ('$nick', $pushups)"); } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
-        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c set of pushups recorded for $nick");
+        eval { 
+          $c = $dbh->do("INSERT INTO pushup_battle (dude, pushups) VALUES ('$nick', $pushups)"); 
+          $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c set of pushups recorded for $nick");
+        } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
     }
 }
 
