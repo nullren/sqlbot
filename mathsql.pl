@@ -10,7 +10,6 @@ my $giturl = "http://github.com/nullren/sqlbot";
 my $git_dir = "/home/ren/src/sqlbot";
 
 ####### #######
-####### #######
 
 my $SERVER = 'irc.foonetic.net';
 my $PORT = 6697;
@@ -21,7 +20,6 @@ my $NICK = 'mathsql';
 my $USERNAME = 'banana';
 my $IRCNAME = 'ask me for help';
 
-####### #######
 ####### #######
 
 my $log_dsn = "DBI:mysql:database=woodstove";
