@@ -22,7 +22,6 @@ my $IRCNAME = 'ask me for help';
 
 ####### #######
 
-my $log_dsn = "DBI:mysql:database=woodstove";
 my $dsn     = "DBI:mysql:database=botshitz";
 
 my $perl_location = `which perl`; chomp $perl_location;
@@ -33,10 +32,7 @@ sleep 2;
 
 my $IRC_ALIAS = 'butt';
 
-my $log_dbh = DBI->connect_cached($log_dsn,'logger','donger', {'RaiseError' => 1}) or die "failed: $@\n";
 my $dbh     = DBI->connect_cached(    $dsn,'derpoid','lolzwut', {'RaiseError' => 1}) or die "failed: $@\n";
-
-my $log_chat = $log_dbh->prepare('INSERT INTO logs (target, nick, text) VALUES (?, ?, ?)') or die "could not make prepare statement: " . $log_dbh->errstr;
 
 my $irc = POE::Component::IRC->spawn(
     nick => $NICK,
@@ -84,10 +80,7 @@ sub handle_msg {
     $channel = $nick if $channel eq $NICK;
 
     # write to db
-    $log_dbh = DBI->connect_cached($log_dsn,'logger','donger', {'RaiseError' => 1}) or die "failed: $@\n";
     $dbh     = DBI->connect_cached(    $dsn,'derpoid','lolzwut', {'RaiseError' => 1}) or die "failed: $@\n";
-
-    $log_chat->execute($channel, $nick, $msg) or die "could not execute statement: " . $log_chat->errstr;
 
     if( $msg =~ /^!(.+)$/ ){
         my $query = $1;
