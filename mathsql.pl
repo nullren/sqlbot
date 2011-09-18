@@ -49,7 +49,7 @@ POE::Session->create( inline_states => {
         $_[KERNEL]->post( $IRC_ALIAS => connect => {} );
     },
     irc_001 => sub {
-        $_[KERNEL]->post( $IRC_ALIAS => mode => "+B" );
+        $_[KERNEL]->post( $IRC_ALIAS => mode => $NICK => "+B" );
         $_[KERNEL]->post( $IRC_ALIAS => join => $_ ) for @CHANNELS;
     },
     irc_433 => sub {
