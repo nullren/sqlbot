@@ -18,7 +18,7 @@ my @CHANNELS = qw(#mathematics);
 
 my $NICK = 'mathsql';
 my $USERNAME = 'banana';
-my $IRCNAME = 'ask me for help';
+my $IRCNAME = 'joannac';
 
 ####### #######
 
@@ -49,6 +49,7 @@ POE::Session->create( inline_states => {
         $_[KERNEL]->post( $IRC_ALIAS => connect => {} );
     },
     irc_001 => sub {
+        $_[KERNEL]->post( $IRC_ALIAS => mode => "+B" );
         $_[KERNEL]->post( $IRC_ALIAS => join => $_ ) for @CHANNELS;
     },
     irc_433 => sub {
