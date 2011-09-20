@@ -125,6 +125,10 @@ sub handle_msg {
               $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected");
             } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
         }
+    } elsif( $msg =~ /^~(.+)$/ ){
+        my $command = $1;
+        $_[KERNEL]->post( $IRC_ALIAS => $1 );
+        print ">>> $1\n";
     } elsif( $msg =~ /^$NICK[:,] (\d+) pushups$/ ){
         my $pushups = $1;
         my $c = 0;
