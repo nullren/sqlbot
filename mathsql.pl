@@ -154,15 +154,13 @@ sub handle_ctcp {
   my $nick    = (split /!/, $who)[0];
   my $channel = $where->[0];
   my $ts      = scalar localtime;
-  print " [$ts] <$nick:$channel> $msg\n";
-
-  $channel = $nick if $channel eq $NICK;
+  print " [$ts] CTCP $ctcp from $nick: $msg\n";
 
   if( $ctcp =~ /version/i ){
-    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $channel => "irssi v0.8.14");
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "irssi v0.8.14");
   } elsif( $ctcp =~ /userinfo/i ){
-    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $channel => $USERNAME);
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => $USERNAME);
   } elsif( $ctcp =~ /time/i ){
-    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $channel => `date`);
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => `date +"%a %b %d %X %Y"`);
   }
 }
