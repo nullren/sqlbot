@@ -19,7 +19,7 @@ my @CHANNELS = qw(#mathematics);
 
 my $NICK = 'mathsql';
 my $USERNAME = 'banana';
-my $IRCNAME = 'joannac';
+my $IRCNAME = 'banana';
 
 ####### #######
 
@@ -160,7 +160,7 @@ sub handle_ctcp {
   if( $ctcp =~ /version/i ){
     $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp irssi v0.8.14");
   } elsif( $ctcp =~ /userinfo/i ){
-    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp $USERNAME");
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp $IRCNAME");
   } elsif( $ctcp =~ /time/i ){
     $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp ". strftime("%a %b %d %R:%S %Y", localtime));
   }
