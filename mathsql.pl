@@ -42,109 +42,127 @@ my $irc = POE::Component::IRC->spawn(
     port => $PORT,
     usessl => $USESSL,
     alias => $IRC_ALIAS, ) or die "uhhhhhh $!";
-    
+
 POE::Session->create( inline_states => {
     _start => sub {
-        $_[KERNEL]->post( $IRC_ALIAS => register => 'all' );
-        $_[KERNEL]->post( $IRC_ALIAS => connect => {} );
+    $_[KERNEL]->post( $IRC_ALIAS => register => 'all' );
+    $_[KERNEL]->post( $IRC_ALIAS => connect => {} );
     },
     irc_001 => sub {
-        $_[KERNEL]->post( $IRC_ALIAS => mode => $NICK => "+B" );
-        $_[KERNEL]->post( $IRC_ALIAS => join => $_ ) for @CHANNELS;
+    $_[KERNEL]->post( $IRC_ALIAS => mode => $NICK => "+B" );
+    $_[KERNEL]->post( $IRC_ALIAS => join => $_ ) for @CHANNELS;
     },
     irc_433 => sub {
-        $_[KERNEL]->post( $IRC_ALIAS => nick => $NICK . $$%1000 );
+    $_[KERNEL]->post( $IRC_ALIAS => nick => $NICK . $$%1000 );
     },
     irc_kick => sub {
-        my ($kernel, $heap, $kicker, $where, $kickee, $msg) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2, ARG3];
-        my $ts      = scalar localtime;
-        print " [$ts] $kicker kicked $kickee from $where: $msg\n";
-        exit 0 if $kickee eq $NICK;
+    my ($kernel, $heap, $kicker, $where, $kickee, $msg) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2, ARG3];
+    my $ts      = scalar localtime;
+    print " [$ts] $kicker kicked $kickee from $where: $msg\n";
+    exit 0 if $kickee eq $NICK;
     },
     irc_public => \&handle_msg,
     irc_msg => \&handle_msg,
+    irc_ctcp => \&handle_ctcp,
     _child => sub {},
     _default => sub {
-        0;    # false for signals
+      0;    # false for signals
     },
 },);
 
 POE::Kernel->run;
 
 sub handle_msg {
-    my ($kernel, $heap, $who, $where, $msg) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2];
-    my $nick    = (split /!/, $who)[0];
-    my $channel = $where->[0];
-    my $ts      = scalar localtime;
-    print " [$ts] <$nick:$channel> $msg\n";
+  my ($kernel, $heap, $who, $where, $msg) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2];
+  my $nick    = (split /!/, $who)[0];
+  my $channel = $where->[0];
+  my $ts      = scalar localtime;
+  print " [$ts] <$nick:$channel> $msg\n";
 
-    $channel = $nick if $channel eq $NICK;
+  $channel = $nick if $channel eq $NICK;
 
-    # write to db
-    $dbh     = DBI->connect_cached(    $dsn,'derpoid','lolzwut', {'RaiseError' => 1}) or die "failed: $@\n";
+# write to db
+  $dbh     = DBI->connect_cached(    $dsn,'derpoid','lolzwut', {'RaiseError' => 1}) or die "failed: $@\n";
 
-    if( $msg =~ /^!(.+)$/ ){
-        my $query = $1;
-        if( $query =~ /^(select|call|show|desc)/i ){
-            eval { 
-                my $sth = $dbh->prepare("$query");
-                $sth->execute; 
-                my (@matrix) = ();
-                my $c = 0;
-                my $COLS = 0;
-                while (my @ary = $sth->fetchrow_array()){
-                    $COLS = scalar @ary;
-                    last if ++$c > ($COLS==1?50:3);
-                    push(@matrix, [@ary]);  # [@ary] is a reference
-                }
-                $sth->finish();
-
-                $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "empty set") if $c == 0;
-
-                $" = '\', \'';
-                if( $COLS == 1 ){
-                    my @shit = ();
-                    push @shit, $$_[0] for @matrix;
-                    $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @shit > 1 ? "('@shit')" : "@shit"));
-                } else {
-                    foreach my $row (@matrix){
-                        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @$row > 1 ? "('@$row')" : "@$row"));
-                    }
-                }
-            } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
-        } elsif( $query =~ /^help/i ){
-            $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "come check me out at $giturl");
-        } elsif( $query =~ /^respawn/i ){
-            system "cd $git_dir && git pull";
-            exec $perl_location, $script_location;
-            exit 0;
-        } else {
-            my $c = 0;
-            eval { 
-              $c = $dbh->do("$query"); 
-              $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected");
-            } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
-        }
-    } elsif( $msg =~ /^~(.+?)$/ ){
-        my @args = split(/ /,$1);
-        my $cmd = shift @args;
-        if( $cmd =~ /tell/i ) {
-          my $who = shift @args;
-          $_[KERNEL]->post( $IRC_ALIAS => privmsg => $who => "@args" );
-        } elsif( $cmd =~ /ctcp/i ){
-          my $who = shift @args;
-          $_[KERNEL]->post( $IRC_ALIAS => ctcp => $who => "@args" );
-        } else {
-          $_[KERNEL]->post( $IRC_ALIAS => quote => $1 );
-        }
-        print ">>> $1\n";
-    } elsif( $msg =~ /^$NICK[:,] (\d+) pushups$/ ){
-        my $pushups = $1;
+  if( $msg =~ /^!(.+)$/ ){
+    my $query = $1;
+    if( $query =~ /^(select|call|show|desc)/i ){
+      eval { 
+        my $sth = $dbh->prepare("$query");
+        $sth->execute; 
+        my (@matrix) = ();
         my $c = 0;
-        eval { 
-          $c = $dbh->do("INSERT INTO pushup_battle (dude, pushups) VALUES ('$nick', $pushups)"); 
-          $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c set of pushups recorded for $nick");
-        } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
+        my $COLS = 0;
+        while (my @ary = $sth->fetchrow_array()){
+          $COLS = scalar @ary;
+          last if ++$c > ($COLS==1?50:3);
+          push(@matrix, [@ary]);  # [@ary] is a reference
+        }
+        $sth->finish();
+
+        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "empty set") if $c == 0;
+
+        $" = '\', \'';
+        if( $COLS == 1 ){
+          my @shit = ();
+          push @shit, $$_[0] for @matrix;
+          $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @shit > 1 ? "('@shit')" : "@shit"));
+        } else {
+          foreach my $row (@matrix){
+            $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => (scalar @$row > 1 ? "('@$row')" : "@$row"));
+          }
+        }
+      } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
+    } elsif( $query =~ /^help/i ){
+      $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "come check me out at $giturl");
+    } elsif( $query =~ /^respawn/i ){
+      system "cd $git_dir && git pull";
+      exec $perl_location, $script_location;
+      exit 0;
+    } else {
+      my $c = 0;
+      eval { 
+        $c = $dbh->do("$query"); 
+        $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c rows affected");
+      } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
     }
+  } elsif( $msg =~ /^~(.+?)$/ ){
+    my @args = split(/ /,$1);
+    my $cmd = shift @args;
+    if( $cmd =~ /tell/i ) {
+      my $who = shift @args;
+      $_[KERNEL]->post( $IRC_ALIAS => privmsg => $who => "@args" );
+    } elsif( $cmd =~ /ctcp/i ){
+      my $who = shift @args;
+      $_[KERNEL]->post( $IRC_ALIAS => ctcp => $who => "@args" );
+    } else {
+      $_[KERNEL]->post( $IRC_ALIAS => quote => $1 );
+    }
+    print ">>> $1\n";
+  } elsif( $msg =~ /^$NICK[:,] (\d+) pushups$/ ){
+    my $pushups = $1;
+    my $c = 0;
+    eval { 
+      $c = $dbh->do("INSERT INTO pushup_battle (dude, pushups) VALUES ('$nick', $pushups)"); 
+      $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$c set of pushups recorded for $nick");
+    } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
+  }
 }
 
+sub handle_ctcp {
+  my ($kernel, $heap, $ctcp, $who, $where, $msg) = @_[KERNEL, HEAP, ARG0, ARG1, ARG2, ARG3];
+  my $nick    = (split /!/, $who)[0];
+  my $channel = $where->[0];
+  my $ts      = scalar localtime;
+  print " [$ts] <$nick:$channel> $msg\n";
+
+  $channel = $nick if $channel eq $NICK;
+
+  if( $ctcp =~ /version/i ){
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $channel => "irssi v0.8.14");
+  } elsif( $ctcp =~ /userinfo/i ){
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $channel => $USERNAME);
+  } elsif( $ctcp =~ /time/i ){
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $channel => `date`);
+  }
+}
