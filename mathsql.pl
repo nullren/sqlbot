@@ -5,6 +5,7 @@ use warnings;
 
 use POE qw(Component::IRC);
 use DBI;
+use POSIX qw/strftime/;
 
 my $giturl = "http://github.com/nullren/sqlbot";
 my $git_dir = "/home/ren/src/sqlbot";
@@ -161,6 +162,6 @@ sub handle_ctcp {
   } elsif( $ctcp =~ /userinfo/i ){
     $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp $USERNAME");
   } elsif( $ctcp =~ /time/i ){
-    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp ".`date +"%a %b %d %X %Y"`);
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp ". strfmttime("%a %b %d %R:%S %Y", localtime));
   }
 }
