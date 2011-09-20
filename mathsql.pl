@@ -162,6 +162,6 @@ sub handle_ctcp {
   } elsif( $ctcp =~ /userinfo/i ){
     $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp $USERNAME");
   } elsif( $ctcp =~ /time/i ){
-    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp ". strfmttime("%a %b %d %R:%S %Y", localtime));
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp ". strftime("%a %b %d %R:%S %Y", localtime));
   }
 }
