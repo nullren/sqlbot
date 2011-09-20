@@ -130,7 +130,7 @@ sub handle_msg {
         my $target = $2;
         my $stuff = $3 || '';
         $_[KERNEL]->post( $IRC_ALIAS => $command => $target => $stuff );
-        print ">>> $1\n";
+        print ">>> $command $target $stuff\n";
     } elsif( $msg =~ /^$NICK[:,] (\d+) pushups$/ ){
         my $pushups = $1;
         my $c = 0;
