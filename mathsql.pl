@@ -157,10 +157,10 @@ sub handle_ctcp {
   print " [$ts] CTCP $ctcp from $nick: $msg\n";
 
   if( $ctcp =~ /version/i ){
-    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "irssi v0.8.14");
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp irssi v0.8.14");
   } elsif( $ctcp =~ /userinfo/i ){
-    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => $USERNAME);
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp $USERNAME");
   } elsif( $ctcp =~ /time/i ){
-    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => `date +"%a %b %d %X %Y"`);
+    $_[KERNEL]->post( $IRC_ALIAS => ctcpreply => $nick => "$ctcp ".`date +"%a %b %d %X %Y"`);
   }
 }
