@@ -128,7 +128,8 @@ sub handle_msg {
       } or $_[KERNEL]->post( $IRC_ALIAS => privmsg => $channel => "$@");
     }
   } elsif( $msg =~ /^~(.+?)$/ ){
-    my @args = split(/ /,$1);
+    my $qry = $1;
+    my @args = split(/ /,$qry);
     my $cmd = shift @args;
     if( $cmd =~ /tell/i ) {
       my $who = shift @args;
@@ -137,9 +138,9 @@ sub handle_msg {
       my $who = shift @args;
       $_[KERNEL]->post( $IRC_ALIAS => ctcp => $who => join(' ',@args) );
     } else {
-      $_[KERNEL]->post( $IRC_ALIAS => quote => $1 );
+      $_[KERNEL]->post( $IRC_ALIAS => quote => $qry );
     }
-    print ">>> $1\n";
+    print ">>> $qry\n";
   } elsif( $msg =~ /^$NICK[:,] (\d+) pushups$/ ){
     my $pushups = $1;
     my $c = 0;
