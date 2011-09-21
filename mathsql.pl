@@ -132,10 +132,10 @@ sub handle_msg {
     my $cmd = shift @args;
     if( $cmd =~ /tell/i ) {
       my $who = shift @args;
-      $_[KERNEL]->post( $IRC_ALIAS => privmsg => $who => "@args" );
+      $_[KERNEL]->post( $IRC_ALIAS => privmsg => $who => join(' ',@args) );
     } elsif( $cmd =~ /ctcp/i ){
       my $who = shift @args;
-      $_[KERNEL]->post( $IRC_ALIAS => ctcp => $who => "@args" );
+      $_[KERNEL]->post( $IRC_ALIAS => ctcp => $who => join(' ',@args) );
     } else {
       $_[KERNEL]->post( $IRC_ALIAS => quote => $1 );
     }
